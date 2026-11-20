@@ -1,0 +1,7 @@
+import http from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {api} from './lib/api.mjs';
+const server=http.createServer(async(req,res)=>{try{const chunks=[];for await(const c of req)chunks.push(c);const request=new Request(`http://${req.headers.host}${req.url}`,{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})});let response;if(new URL(request.url).pathname.startsWith('/api/'))response=await api(request);else {const file={'/':'index.html','/app.js':'app.js','/ui.js':'ui.js','/map.js':'map.js','/profile.js':'profile.js','/vendor/qrcode.js':'vendor/qrcode.js','/vendor/leaflet.js':'vendor/leaflet.js','/vendor/leaflet.css':'vendor/leaflet.css','/style.css':'style.css'}[new URL(request.url).pathname];response=file?new Response(await readFile(new URL(`./frontend/${file}`,import.meta.url)),{headers:{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html; charset=utf-8'}}):new Response('Not found',{status:404});}res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));}catch{res.writeHead(500);res.end('Server error');}});
+server.listen(Number(process.env.PORT)||5173,'127.0.0.1',()=>console.log('Local: http://127.0.0.1:'+(Number(process.env.PORT)||5173)));
+
+server.on('error',error=>{console.error(error.code==='EADDRINUSE'?'Port is busy. Stop the previous server with Ctrl+C or set PORT=5174.':error.message);process.exitCode=1;});

@@ -1,0 +1,1 @@
+{"name":"astana-lrt","version":"1.0.0","type":"module","private":true,"scripts":{"dev":"node server.mjs","start":"node server.mjs","build":"node build.mjs","test":"node --test tests/*.test.mjs"}}

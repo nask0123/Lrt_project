@@ -1,0 +1,6 @@
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+await mkdir('dist/server',{recursive:true});
+const transit=(await readFile('lib/geography.mjs','utf8'))+'\n'+(await readFile('lib/transit.mjs','utf8')).replace("import {geoStations,routeGeometry} from './geography.mjs';",'');const api=(await readFile('lib/api.mjs','utf8')).replace("import {snapshot,journeyPlan} from './transit.mjs';",'');
+const files={};for(const [path,file,type] of [['/','index.html','text/html; charset=utf-8'],['/app.js','app.js','text/javascript'],['/ui.js','ui.js','text/javascript'],['/map.js','map.js','text/javascript'],['/profile.js','profile.js','text/javascript'],['/vendor/qrcode.js','vendor/qrcode.js','text/javascript'],['/vendor/leaflet.js','vendor/leaflet.js','text/javascript'],['/vendor/leaflet.css','vendor/leaflet.css','text/css'],['/style.css','style.css','text/css']])files[path]={body:await readFile('frontend/'+file,'utf8'),type};
+await writeFile('dist/server/index.js',transit+'\n'+api+'\nconst assets='+JSON.stringify(files)+';\nexport default {async fetch(req){const p=new URL(req.url).pathname;if(p.startsWith("/api/"))return api(req);const a=assets[p];return a?new Response(a.body,{headers:{"Content-Type":a.type}}):new Response("Not found",{status:404});}};');
+console.log('Built frontend and Worker backend.');
